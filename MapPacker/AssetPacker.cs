@@ -192,10 +192,16 @@ namespace MapPacker {
 				var mapData = File.ReadAllBytes($"{map}");
 				if(rootMap)
 					parentForm.PrintToConsole($"Read Vmap file, parsing...");
+
 				AssetFile mapFile = AssetFile.From(mapData);
+
 				mapFile.TrimAssetList(); // trim it to the space where assets are actually referenced, using "map_assets_references" markers
 
+
+				bool found = true;
 				foreach(var item in mapFile.SplitNull()) {
+					found = true;
+
 					if(item.EndsWith("vmat")) {
 						GetAssetsFromMaterial(item);
 					} else if(item.EndsWith("vmdl")) {
@@ -211,6 +217,12 @@ namespace MapPacker {
 						}
 					} else if (item.EndsWith("vpost")) {
 						AddAsset(item); // post processing file
+					} else {
+						found = false;
+					}
+
+					if(found) {
+						parentForm.PrintToConsole("Found asset " + item + "...");
 					}
 				}
 			} catch {
@@ -294,7 +306,7 @@ namespace MapPacker {
 				// make sure the file is an asset file as we'd want it
 				return;
 			}
-			assets.Add(asset);
+			assets.Add(asset);		
 		}
 
 		public static string CleanAssetPath(string item) {
@@ -352,13 +364,13 @@ namespace MapPacker {
 		}
 
 		public string TrimAssetList(string marker = "map_asset_references") {
-			var start = assetReference.IndexOf(marker);
-			var end = assetReference.LastIndexOf(marker);
-			var output = assetReference.Substring(start, end - start);
+			int start = assetReference.IndexOf(marker);
+			int end = start + marker.Length + assetReference.Substring(start + marker.Length).IndexOf(marker);
+			var output = assetReference[start..end];
 			return output;
 		}
 
-		// obsolete since we're doing prefab scans anyways
+// obsolete since we're doing prefab scans anyways
 		public bool IsMapSkybox() {
 			var splitStrings = this.SplitNull();
 
